@@ -1,39 +1,39 @@
+import time
+import pyaudio
+
 import sounddevice as sd
 from scipy.io.wavfile import write
 from playsound import playsound
-import PySimpleGUI as GUI
+from tkinter import *
+import record_audio
 
-
-def record_sound():
-
-    print("Ready to record?")
-    fs = 44100  # Sample rate
-    seconds = 3  # Duration of recording
-
-    myrecording = sd.rec(int(seconds * fs), samplerate=fs, channels=2)
-    sd.wait()  # Wait until recording is finished
-    write('output.wav', fs, myrecording)  # Save as WAV file
-    print("Recorded?")
-    playsound('output.wav')
-    print("played?")
+# TODO google api to send it what I record and see if it works?
+# TODO python library for speech comparison?
 
 
 def open_window():
-    # TODO figure out how to resize this (to start with just to the size of the screen)
-    layout = [[GUI.Text("Welcome to MySpeechTherapy")], [GUI.Button("Start")], [GUI.Button("Exit")]]
+    window = Tk()
+    window.title('My Speech Therapy Project')
+    window.geometry("800x500")
+    window.resizable()
 
-    # Create the window
-    window = GUI.Window("Demo", layout, margins=(400, 200))
+    # Making my buttons to record audio
+    exit_button = Button(window, text="Exit", command=lambda: window.destroy())
+    record_audio_btn = Button(window, text="Start Recording", command=lambda: record_audio.RecAUD())
+    # stop_recording_audio = Button(window, text="Stop Recording", command=lambda: start_recording(audioObject))
 
-    # Create an event loop
-    while True:
-        event, values = window.read()
-        # End program if user closes window or
-        # presses the OK button
-        if event == "Exit" or event == GUI.WIN_CLOSED:
-            break
+    # Putting my buttons on the screen, and configuring the Grid
+    record_audio_btn.grid(row=0, column=0, columnspan=2)
+    # stop_recording_audio.grid(row=0, column=2, columnspan=2)
+    exit_button.grid(row=1, column=1, columnspan=2)
 
-    window.close()
+    # Organizing the grid for my button layout
+    for row_number in range(2):
+        Grid.rowconfigure(window, row_number, weight=1)
+    for column_number in range(4):
+        Grid.columnconfigure(window, column_number, weight=1)
+
+    window.mainloop()
 
 
 if __name__ == '__main__':
@@ -43,4 +43,15 @@ if __name__ == '__main__':
 # Sources
 # https://realpython.com/playing-and-recording-sound-python/#recording-audio
 #     Used for how to record and playback audio
-
+# https://www.daniweb.com/programming/software-development/threads/426702/problem-in-music-player
+#     Used to fix my error when trying to play the sound
+# https://www.youtube.com/watch?v=NytF3pJSMc8&ab_channel=Codemy.com
+#     Used for TKinter basics (And other Codemy.com videos on youtube)
+# https://www.geeksforgeeks.org/python-add-image-on-a-tkinter-button/
+#     Used for images on a tkinter button
+# https://www.iconsdb.com/blue-icons/microphone-icon.html
+#     Used for my microphone image
+# https://stackoverflow.com/questions/30786337/tkinter-windows-how-to-view-window-in-windows-task-bar-which-has-no-title-bar/30819099#30819099
+#     Used to get rid of titlebar
+# https://stackoverflow.com/questions/14910858/how-to-specify-where-a-tkinter-window-opens
+#     Used to move my window to open at a certain location
