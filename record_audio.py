@@ -21,7 +21,7 @@ class RecAUD:
         self.main = tkinter.Tk()
         # TODO
         # Setting this window the only clickable (doesnt actually work)
-        self.main.grab_set()
+        # self.main.grab_set()
         self.collections = []
         self.mouse = Controller()
 
@@ -53,7 +53,7 @@ class RecAUD:
                                   frames_per_buffer=self.CHUNK)
 
         # Mic Button
-        mic_image = tkinter.PhotoImage(master=self.main, file=r"mic_image.png").subsample(3, 3)
+        mic_image = tkinter.PhotoImage(master=self.main, file=r"Photos/mic_image.png").subsample(3, 3)
         self.strt_rec = tkinter.Button(self.main, command=lambda: self.start_record(), image=mic_image,
                                        width=w, height=h)
         self.strt_rec.grid(row=0, column=0, sticky='nsew')
@@ -89,7 +89,7 @@ class RecAUD:
             wf.writeframes(b''.join(self.frames))
             wf.close()
             # TODO not working
-            self.main.grab_release()
+            # self.main.grab_release()
             self.main.destroy()
 
     def stop(self):

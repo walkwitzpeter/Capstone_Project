@@ -20,14 +20,24 @@ class GoogleAPI:
         config = speech.RecognitionConfig(
             encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
             audio_channel_count=2,
-            language_code="en-US"
+            language_code="en-US",
+            # Change this to show more possibilities from the interpreter
+            max_alternatives=5
         )
 
         # Sends the request to google to transcribe the audio
         response = self.client.recognize(request={"config": config, "audio": audio})
 
-        # Reads the response
+        # Reading all possible responses based on my max alternatives
+        result_list = []
         for result in response.results:
-            print("Transcript: {}".format(result.alternatives[0].transcript))
+            for option in result.alternatives:
+                print(option.transcript)
+                result_list.append(option.transcript)
+        print(str(result_list))
+        return result_list
+        # Reads the response
+            # return result.alternatives[0].transcript
+        # return response.results.message.alternatives[0].transcript
 
 
