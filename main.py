@@ -75,26 +75,13 @@ def open_basic_association(prev_win):
     tk = tkinter_window.TkInterWindow()
     tk.open_new_window(prev_win, "Basic Associations")
     main = tk.window
-    # Variables to get my speech therapy words/images
-    word_img_dict = word_image_dictionary.WordImageDictionary
-    all_words = word_image_dictionary.ArrayOfWords
+    # Loading right answer and wrong answer pictures
+    red_x = PhotoImage(file="Photos/Red X.png").subsample(9, 9)
+    green_check = PhotoImage(file="Photos/Green Check.png").subsample(9, 9)
 
-    # Creating something to keep track of what the current answer is
-    stack_of_words = []
-    cur_answer = ""
-    # Loading my pictures so that they will show up when called
-    stack_of_pics = []
-    for word in all_words:
-        img = PhotoImage(file="Photos/" + word_img_dict[word]).subsample(2, 2)
-        stack_of_pics.append(img)
-        stack_of_words.append(word)
-    print("stacks:")
-    print(stack_of_pics)
-    print(stack_of_words)
-
-    #TODO
-    # create see word button
-    # create hear recording button
+    # Creating something to keep track of what the current answer is and load photos
+    photos_and_answers = word_image_dictionary.Words()
+    photos_and_answers.initializeStacks()
 
     # Making my grid to place items
     for row_number in range(ROWS):
@@ -103,21 +90,23 @@ def open_basic_association(prev_win):
         Grid.columnconfigure(main, column_number, weight=2)
 
     # Setting up the first image/answer for the user
-    img = stack_of_pics.pop()
-    cur_answer = stack_of_words.pop()
+    img = photos_and_answers.imgStack.pop()
+    photos_and_answers.updateCurAnswer()
     main_img = Label(main, image=img)
     main_img.grid(row=1, rowspan=2, column=3, columnspan=3)
 
-    # TODO
     # Setting up the record button for the user
     record_audio_btn = Button(main, text="Record Answer", command=lambda: record_audio.RecAUD())
     record_audio_btn.grid(row=4, column=4)
     # Seeing the recording text
-    recording_text = Label(main, text="Your answer appears here")
+    recording_text = Label(main, text="Your answer appears here", compound=LEFT)
     recording_text.grid(row=5, column=4, columnspan=2)
-    see_recording_btn = Button(main, text="Check Recording",
-                               command=lambda: check_recording(recording_text, cur_answer))
-    see_recording_btn.grid(row=4, column=5)
+    check_recording_btn = Button(main, text="Check Recording",
+                                 command=lambda: check_recording(recording_text, photos_and_answers.curAnswer,
+                                                                 green_check, red_x))
+    check_recording_btn.grid(row=4, column=5)
+    # Hiding the check recording button until user records something
+    # check_recording_btn.grid_remove()
 
     # Placing my back and next arrows
     back_arw_img = tkinter.PhotoImage(master=main, file=r"Photos/Back Arrow.png").subsample(7, 7)
@@ -125,7 +114,8 @@ def open_basic_association(prev_win):
     back_btn.grid(row=0, column=0)
     next_arw_img = tkinter.PhotoImage(master=main, file=r"Photos/Next Arrow.png").subsample(9, 9)
     next_arw_btn = Button(main, text="Next",
-                          command=lambda: cur_answer == update_image(main_img, stack_of_pics, stack_of_words),
+                          command=lambda: update_image(main_img, photos_and_answers.imgStack, photos_and_answers,
+                                                       recording_text),
                           image=next_arw_img)
     next_arw_btn.grid(row=ROWS, column=COLUMNS)
 
@@ -139,9 +129,16 @@ def open_basic_association(prev_win):
 
 
 def open_type_say_see(prev_win):
+    # Grid size variables
+    COLUMNS = 8
+    ROWS = 8
+    # Tk Variables
     tk = tkinter_window.TkInterWindow()
     tk.open_new_window(prev_win, "Type Say See Hear")
     main = tk.window
+    # Setting up answer images
+    red_x = PhotoImage(file="Photos/Red X.png").subsample(9, 9)
+    green_check = PhotoImage(file="Photos/Green Check.png").subsample(9, 9)
 
     img = tkinter.PhotoImage(file="Photos/mic_image.png", master=main)
     label = Label(
@@ -156,27 +153,32 @@ def open_type_say_see(prev_win):
     back_btn.grid(row=0, rowspan=1, column=0, columnspan=1)
 
 
-def check_recording(text_element, cur_answer):
-    text = str(google_api.GoogleAPI().get_transcript())
-    text_element['text'] = text
-    # TODO this isn't updating?
-    print("cur_answer: " + cur_answer)
-    if text.__contains__("carrot"):
-        print("found")
+def check_recording(recording_text, cur_answer, check, red_x):
+    if cur_answer != "Done":
+        text = str(google_api.GoogleAPI().get_transcript())
+        recording_text['text'] = "We heard the following possibilities:\n" + text
+        recording_text.grid()
+        print("cur_answer: " + cur_answer)
+        if text.casefold().__contains__(cur_answer.casefold()):
+            recording_text['image'] = check
+            print("found")
+        else:
+            recording_text['image'] = red_x
+            print("not found")
     else:
-        print("not found")
+        recording_text['text'] = "You went through all the words!"
+        recording_text.grid()
 
 
-def update_image(label, img_stack, word_stack):
+def update_image(label, img_stack, photos_and_answers, recording_text):
     # Changing image if there is another image waiting and update answer
-    new_answer = ""
     if img_stack:
         img = img_stack.pop()
         label.configure(image=img)
         label.image = img
-        new_answer = word_stack.pop()
-        print(new_answer)
-    return new_answer
+        photos_and_answers.updateCurAnswer()
+        recording_text.grid_remove()
+
 
 if __name__ == '__main__':
     open_homepage_window()
@@ -187,15 +189,24 @@ if __name__ == '__main__':
 # https://www.daniweb.com/programming/software-development/threads/426702/problem-in-music-player
 #     Used to fix my error when trying to play the sound
 # https://www.youtube.com/watch?v=NytF3pJSMc8&ab_channel=Codemy.com
+# https://pythonprogramming.altervista.org/python-gui-with-tkinter-labels-with-text-and-images/?doing_wp_cron=1644523669.3052639961242675781250
+# https://www.delftstack.com/howto/python-tkinter/how-to-hide-recover-and-delete-tkinter-widgets/#grid-remove-method-to-hide-tkinter-widgets-if-grid-layout-is-used
 #     Used for TKinter basics (And other Codemy.com videos on youtube)
 # https://www.geeksforgeeks.org/python-add-image-on-a-tkinter-button/
 # https://twitter.com/humanbrainproj/status/1233727365768974336?lang=eu
 # https://www.iconfinder.com/icons/329731/back_arrow_left_previous_return_icon
 # https://commons.wikimedia.org/wiki/File:Apple_icon_1.png
 # https://www.pngwing.com/en/free-png-kqaob
-#     Used for images
+# https://www.iconsdb.com/green-icons/check-mark-3-icon.html
+# https://www.dictionary.com/e/emoji/cross-mark-emoji/
+# https://shop.passionfoods.com.au/search?q%5B%5D=category%3Awheat&sort_by=discount_percent
+# https://www.ebay.com/itm/303883647178
+# https://houseofhealthcollective.com.au/category/dried-fruit-nuts
+# https://www.pinterest.com/pin/free-orange-radio-2-icon-download-orange-radio-2-icon--613404411743203644/
+# https://www.crunchbase.com/organization/done-38e9
 # https://www.iconsdb.com/blue-icons/microphone-icon.html
-#     Used for my microphone image
+# https://stackoverflow.com/questions/10158552/how-to-use-an-image-for-the-background-in-tkinter
+#     Used for images
 # https://stackoverflow.com/questions/30786337/tkinter-windows-how-to-view-window-in-windows-task-bar-which-has-no-title-bar/30819099#30819099
 #     Used to get rid of titlebar
 # https://stackoverflow.com/questions/14910858/how-to-specify-where-a-tkinter-window-opens
@@ -205,7 +216,5 @@ if __name__ == '__main__':
 # https://stackoverflow.com/questions/42708389/how-to-set-environment-variables-in-pycharm
 # https://www.hellocodeclub.com/python-speech-recognition-create-program-with-google-api/
 #     Getting my API to work
-# https://stackoverflow.com/questions/10158552/how-to-use-an-image-for-the-background-in-tkinter
-#     Using an image as background
 # https://stackoverflow.com/questions/6434482/python-function-overloading
 #     Defining a function with a "none" input

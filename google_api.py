@@ -36,8 +36,4 @@ class GoogleAPI:
                 result_list.append(option.transcript)
         print(str(result_list))
         return result_list
-        # Reads the response
-            # return result.alternatives[0].transcript
-        # return response.results.message.alternatives[0].transcript
-
 
