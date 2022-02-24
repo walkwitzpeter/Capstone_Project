@@ -1,10 +1,10 @@
 from tkinter import *
-import tkinter
+from datetime import date
 
+import word_image_dictionary
 import google_api
 import main
 import record_audio
-import word_image_dictionary
 
 
 class TkInterWindow:
@@ -33,11 +33,40 @@ class TkInterWindow:
         # Answer/Img Stack
         self.photos_and_answers = None
 
+        # Keeping track of percentage correct
+        self.words_attempted = 0
+        self.words_correct = 0
+        self.percentage_right = 0
+        self.checked = False
+
     #TODO
     # Separate all of the words into different categories
     # Click on what category you want after selecting the game mode? or before?
+    # Possibly update the user data to keep track of the catagories and how each catagory is doing with the words
 
-    def open_new_window(self, prev_win, title):
+    def open_basic_window(self, prev_win, title):
+        prev_win.destroy()
+        self.window = Tk()
+        self.window.title(title)
+        self.window.geometry("800x500")
+
+        # Making my grid
+        for row_number in range(self.ROWS):
+            Grid.rowconfigure(self.window, row_number, weight=4)
+        for column_number in range(self.COLUMNS):
+            Grid.columnconfigure(self.window, column_number, weight=4)
+
+        # Place a back arrow
+        self.back_arw_img = PhotoImage(master=self.window, file="Photos/Back Arrow.png").subsample(7, 7)
+        self.back_btn = Button(self.window, text="Back",
+                               command=lambda: self.go_back(),
+                               image=self.back_arw_img)
+        self.back_btn.grid(row=0, column=0)
+        # Making its part of the grid smaller than the other parts
+        Grid.rowconfigure(self.window, 0, weight=1)
+        Grid.columnconfigure(self.window, 0, weight=1)
+
+    def open_game_window(self, prev_win, title, category):
         prev_win.destroy()
         self.window = Tk()
         self.window.title(title)
@@ -49,7 +78,7 @@ class TkInterWindow:
 
         # Creating something to keep track of what the current answer is and load photos
         self.photos_and_answers = word_image_dictionary.Words()
-        self.photos_and_answers.initializeStacks()
+        self.photos_and_answers.initializeStacks(category)
 
         # Making my grid to place items
         for row_number in range(self.ROWS):
@@ -72,14 +101,17 @@ class TkInterWindow:
         # Placing my back and next arrows
         self.back_arw_img = PhotoImage(master=self.window, file=r"Photos/Back Arrow.png").subsample(7, 7)
         self.back_btn = Button(self.window, text="Back",
-                               command=lambda: main.open_homepage_window(self.window),
+                               command=lambda: self.go_back(),
                                image=self.back_arw_img)
         self.back_btn.grid(row=0, column=0)
         self.next_arw_img = PhotoImage(master=self.window, file=r"Photos/Next Arrow.png").subsample(9, 9)
         self.next_arw_btn = Button(self.window, text="Next",
-                                   command=lambda: self.update_image(),
+                                   command=lambda: self.next_image(),
                                    image=self.next_arw_img)
         self.next_arw_btn.grid(row=self.ROWS, column=self.COLUMNS)
+        # Making their part of the grid smaller than the other parts
+        Grid.rowconfigure(self.window, 0, weight=1)
+        Grid.columnconfigure(self.window, 0, weight=1)
 
         # Setting up the record button
         self.record_audio_btn = Button(self.window, text="Record Answer",
@@ -102,11 +134,23 @@ class TkInterWindow:
             self.feedback_text['image'] = self.check_img
             self.record_audio_btn.grid()
             self.check_recording_btn.grid()
+            self.update_counts(right_answer=True)
         else:
             self.feedback_text['text'] = "Incorrect"
             self.feedback_text['image'] = self.x_img
+            self.update_counts()
+        self.feedback_text.grid()
 
-    def update_image(self):
+    def update_counts(self, right_answer=False):
+        if not self.checked:
+            if right_answer:
+                self.words_correct += 1
+            self.words_attempted += 1
+            self.checked = True
+            print(str(self.words_correct) + "Correct")
+            print(str(self.words_attempted) + "Attempted")
+
+    def next_image(self):
         # Changing image if there is another image waiting and update answer
         if self.photos_and_answers.imgStack:
             img = self.photos_and_answers.imgStack.pop()
@@ -114,20 +158,30 @@ class TkInterWindow:
             self.main_img.image = img
             self.photos_and_answers.updateCurAnswer()
             self.feedback_text.grid_remove()
+            self.checked = False
 
     def check_recording(self):
-        if self.photos_and_answers.curAnswer != "Done":
-            text = str(google_api.GoogleAPI().get_transcript())
-            self.feedback_text['text'] = "We heard the following possibilities:\n" + text
-            self.feedback_text.grid()
-            print("cur_answer: " + self.photos_and_answers.curAnswer)
-            if text.casefold().__contains__(self.photos_and_answers.curAnswer.casefold()):
-                self.feedback_text['image'] = self.check_img
-            else:
-                self.feedback_text['image'] = self.x_img
+        text = str(google_api.GoogleAPI().get_transcript())
+        self.feedback_text['text'] = "We heard the following possibilities:\n" + text
+        self.feedback_text.grid()
+        print("cur_answer: " + self.photos_and_answers.curAnswer)
+        if text.casefold().__contains__(self.photos_and_answers.curAnswer.casefold()):
+            self.feedback_text['image'] = self.check_img
+            self.update_counts(right_answer=True)
         else:
-            self.feedback_text['text'] = "You went through all the words!"
-            self.feedback_text.grid()
+            self.feedback_text['image'] = self.x_img
+            self.update_counts()
+
+    def go_back(self):
+        # Append percentage right to txt file
+        if self.words_attempted > 0:
+            self.percentage_right = self.words_correct/self.words_attempted
+            with open("Output_Files/user_percentages.csv", "a") as file_object:
+                file_object.write(str(self.words_attempted) + "," + str(self.percentage_right * 100) + "," +
+                                  str(date.today())
+                                  + "\n")
+        # Go Back to Homepage
+        main.open_homepage_window(self.window)
 
     def close_window(self):
         self.window.destroy()

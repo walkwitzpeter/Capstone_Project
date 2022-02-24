@@ -9,7 +9,7 @@ class GoogleAPI:
         self.client = speech.SpeechClient()
 
         # Full path of the audio file
-        self.file_name = os.path.join(os.path.dirname(__file__), "test_recording.wav")
+        self.file_name = os.path.join(os.path.dirname(__file__), "Output_Files/audio_recording.wav")
 
     def get_transcript(self):
         # Loads the audio file into memory
