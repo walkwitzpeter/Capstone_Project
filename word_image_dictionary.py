@@ -5,7 +5,8 @@ from tkinter import PhotoImage
 FoodWords = ['Apple', 'Orange', 'Carrot', 'Rice', 'Raisin']
 ColorWords = ['Red', 'Green', 'Blue', 'Pink', 'Black']
 ObjectWords = ['Radio', 'Rocket', 'Wrench', 'Rock', 'Computer']
-AllWords = FoodWords + ColorWords + ObjectWords
+BodyWords = ['Hand', 'Foot']
+AllWords = FoodWords + ColorWords + ObjectWords + BodyWords
 
 # WordImageDictionary = {
 #     'Done': 'Done.png',
@@ -42,6 +43,8 @@ class Words:
             chosen_array = ColorWords
         elif category == "Object":
             chosen_array = ObjectWords
+        elif category == "Body":
+            chosen_array = BodyWords
         elif category == "All":
             chosen_array = AllWords
         else:

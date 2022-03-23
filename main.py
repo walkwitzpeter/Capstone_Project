@@ -5,48 +5,100 @@ import tkinter.font as font
 
 
 def open_homepage_window(prev_win=None):
-    if prev_win is not None:
-        prev_win.destroy()
-    window = Tk()
-    window.title('Speaking with Peter Rabbit')
-    window.geometry("800x500")
+    tk = tkinter_window.TkInterWindow()
+    tk.open_basic_window("Speaking with Peter Rabbit", prev_win)
     img = PhotoImage(file="Photos/Homepage Image.png")
+
     label = Label(
-        window,
+        tk.window,
         image=img,
-        height=window.winfo_screenheight(),
-        width=window.winfo_screenwidth()
+        height=tk.window.winfo_screenheight(),
+        width=tk.window.winfo_screenwidth()
     )
     label.place(x=0, y=0, relwidth=1, relheight=1)
 
+    my_font_big = font.Font(size=20)
+    my_font_small = font.Font(size=15)
     # Play button
-    play_btn = Button(window, text="Practice", command=lambda: open_category_selection(window))
-    play_btn.grid(row=3, rowspan=2, column=0, columnspan=2)
+    play_btn = Button(tk.window, text="Practice", font=my_font_big,
+                      command=lambda: open_category_selection(tk.window))
+    play_btn.grid(row=5, rowspan=1, column=3, columnspan=2)
 
-    # # Making my different activity buttons
-    # associations_btn = Button(window, text="Basic Associations", command=lambda: open_basic_association(window))
-    # type_say_see_btn = Button(window, text="Type, Say, See", command=lambda: open_type_say_see(window))
-    #
-    # # Putting them on the screen and configuring the Grid
-    # associations_btn.grid(row=0, rowspan=2, column=0, columnspan=2)
-    # type_say_see_btn.grid(row=1, rowspan=2, column=0, columnspan=2)
+    # See user data Button
+    see_user_stats_btn = Button(tk.window, text="See Stats", font=my_font_small,
+                                command=lambda: open_stats(tk.window))
+    see_user_stats_btn.grid(row=2, rowspan=1, column=1, columnspan=1)
+    # Instructions Button
+    instructions_btn = Button(tk.window, text="Instructions", font=my_font_small,
+                              command=lambda: open_instructions(tk.window))
+    instructions_btn.grid(row=2, rowspan=1, column=7, columnspan=1)
 
-    # Organizing the grid for my button layout
-    for row_number in range(3):
-        Grid.rowconfigure(window, row_number, weight=1)
-    # for column_number in range(4):
-    #     Grid.columnconfigure(window, column_number, weight=1)
+    tk.window.mainloop()
 
-    # See user data Buttons
-    see_user_stats_btn = Button(window, text="See Stats", command=lambda: open_stats(window))
-    see_user_stats_btn.grid(row=2, rowspan=2, column=0, columnspan=2)
 
-    window.mainloop()
+def open_instructions(prev_win):
+    print("Instructions")
+    tk = tkinter_window.TkInterWindow()
+    tk.open_basic_window("Instructions", prev_win)
+
+    # Font Sizes
+    my_font_big = font.Font(size=30)
+    my_font_small = font.Font(size=15)
+
+    # Basic Instructions
+    basic_ins_title = Label(
+        tk.window,
+        text="Basic Instructions",
+        font=my_font_big
+    )
+    basic_ins_title.grid(row=0, column=0, columnspan=4)
+    basic_instructions = Text(
+        tk.window,
+        font=my_font_small,
+        width=30,
+        height=8,
+    )
+    basic_instructions.insert(END, "This program is designed to help users practice their speech while providing "
+                                   "feedback on growth over time. The stats button will show you your progress each "
+                                   "day. These graphs average out all exercises of each mode that you did that day. The"
+                                   " number next to each point displays how many questions you completed in total that "
+                                   "day.\n\nTo begin practicing first click 'Practice' on the homepage and then select "
+                                   "your category of words, then select the game mode you would like to play. The modes"
+                                   " are explained to the right.")
+    basic_instructions.config(state=DISABLED)
+    basic_instructions.grid(row=1, column=1, columnspan=3)
+    # Scrollbar for this text
+    scrollbar = Scrollbar(tk.window, command=basic_instructions.yview)
+    basic_instructions.config(yscrollcommand=scrollbar.set)
+    scrollbar.grid(row=1, rowspan=1, column=0, sticky=NSEW)
+
+    # Game Instructions
+    # TODO
+    #   Maybe change this back because I don't love it right now, but show him what I was figuring out
+    basic_ins_title = Label(
+        tk.window,
+        text="Game Mode Instructions",
+        font=my_font_big
+    )
+    basic_ins_title.grid(row=0, column=4, columnspan=4)
+    game_instructions = Label(
+        tk.window,
+        text="In Basic Associations the user will be shown a picture after which they record the word that the picture "
+             "is showing. To record themselves the user clicks the record button and a microphone appears, then click "
+             "the microphone to begin recording and click again to end the recording. \n \n"
+             "In Type Say See you can both record your answer or type it, we recommend typing the answer first to work "
+             "on spelling then reading your answer afterwards. Once you hit enter it will check your answer, or if you "
+             "already answered correctly it hitting enter again will take you to the next screen, or you may click the "
+             "check answer button to check the text entry, and use the arrow to go to the next screen.",
+        font=my_font_small,
+        wraplength=500
+    )
+    game_instructions.grid(row=1, column=4, columnspan=4)
 
 
 def open_game_selection(prev_win, word_category):
     tk = tkinter_window.TkInterWindow()
-    tk.open_basic_window(prev_win, "Game Selection")
+    tk.open_basic_window("Game Selection", prev_win)
 
     # Making my different activity buttons
     associations_btn = Button(tk.window, text="Basic Associations",
@@ -61,13 +113,14 @@ def open_game_selection(prev_win, word_category):
 
 def open_category_selection(prev_win):
     tk = tkinter_window.TkInterWindow()
-    tk.open_basic_window(prev_win, "Categories")
+    tk.open_basic_window("Categories", prev_win)
     tk.ROWS = 7
     tk.COLUMNS = 7
     tk.back_btn.grid(row=0, rowspan=1, column=0, columnspan=1)
 
-    # Setting up each category button
+    # The font for the buttons
     my_font = font.Font(family='Helvetica', size=20)
+    # Setting up each category button
     food_btn = Button(tk.window, text="Foods", font=my_font,
                       command=lambda: open_game_selection(tk.window, "Food"))
     food_btn.grid(row=1, rowspan=2, column=1, columnspan=2)
@@ -75,41 +128,82 @@ def open_category_selection(prev_win):
                        command=lambda: open_game_selection(tk.window, "Color"))
     color_btn.grid(row=1, rowspan=2, column=5, columnspan=2)
 
-    all_btn = Button(tk.window, text="All Categories", font=my_font)
+    all_btn = Button(tk.window, text="All Categories", font=my_font,
+                     command=lambda: open_game_selection(tk.window, "All"))
     all_btn.grid(row=3, rowspan=2, column=3, columnspan=2)
 
     object_btn = Button(tk.window, text="Objects", font=my_font,
                         command=lambda: open_game_selection(tk.window, "Object"))
     object_btn.grid(row=5, rowspan=2, column=1, columnspan=2)
     body_part_btn = Button(tk.window, text="Body Parts", font=my_font,
-                           command=lambda: open_game_selection(tk.window, "Body Part"))
+                           command=lambda: open_game_selection(tk.window, "Body"))
     body_part_btn.grid(row=5, rowspan=2, column=5, columnspan=2)
 
 
 def open_stats(prev_win):
-    tk = tkinter_window.TkInterWindow()
-    tk.open_basic_window(prev_win, "User Stats")
+    # My call back function to change graphs on drop down menu
+    def graph_callback(*args):
+        if 'Typing' in clicked.get():
+            type_figure.grid()
+            ass_figure.grid_remove()
+        elif 'Speaking' in clicked.get():
+            type_figure.grid_remove()
+            ass_figure.grid()
+        else:
+            type_figure.grid_remove()
+            ass_figure.grid_remove()
 
-    udm.find_stats()
-    graph = udm.get_plot(tk.window)
-    graph.get_tk_widget().grid(row=1, rowspan=tk.ROWS - 1, column=1, columnspan=tk.COLUMNS-1)
+    tk = tkinter_window.TkInterWindow()
+    tk.open_basic_window("User Stats", prev_win)
+
+    # Setting up the drop-down menu
+    graphs = [
+        'Select Graph',
+        'Typing Mode',
+        'Speaking Mode'
+    ]
+    clicked = StringVar(value=graphs[0])
+    drop = OptionMenu(tk.window, clicked, *graphs)
+    drop.grid(row=0, columnspan=tk.ROWS, column=0)
+
+    # Setting up the graph for associations mode
+    udm.find_stats("Output_Files/associations_user_percentages.csv")
+    associations_graph = udm.get_plot(tk.window, "Associations")
+    ass_figure = associations_graph.get_tk_widget()
+    # Placing so it retains proper position, then removing
+    ass_figure.grid(row=2, column=0, columnspan=tk.COLUMNS)
+    ass_figure.grid_remove()
+
+    # Setting up the graph for TSS mode
+    udm.find_stats("Output_Files/tss_user_percentages.csv")
+    typing_graph = udm.get_plot(tk.window, "Typing Mode")
+    type_figure = typing_graph.get_tk_widget()
+    # Placing so it retains proper position, then removing
+    type_figure.grid(row=2, column=0, columnspan=tk.COLUMNS)
+    type_figure.grid_remove()
+
+    # Calling my callback function
+    clicked.trace("w", graph_callback)
 
 
 def open_basic_association(prev_win, category):
     # Running my Basic Game Window
     tk = tkinter_window.TkInterWindow()
-    tk.open_game_window(prev_win, "Basic Associations", category)
+    tk.open_game_window(prev_win, "Basic Associations", category, "Associations")
 
 
 def open_type_say_see(prev_win, category):
     # Tk Variables
     tk = tkinter_window.TkInterWindow()
-    tk.open_game_window(prev_win, "Type Say See Hear", category)
+    tk.open_game_window(prev_win, "Type Say See Hear", category, "TSS")
 
     # Set up the input typing
     entry = Entry(tk.window, width=50)
     entry.focus_set()
     entry.grid(row=3, column=3, columnspan=4)
+    # This is used to let the user check their answer with the enter key
+    entry.bind('<Key-Return>', lambda *_args: tk.enter_func(entry))
+
     check_entry_btn = Button(tk.window, text="Check Answer",
                              command=lambda: tk.check_text_entry(entry))
     check_entry_btn.grid(row=5, column=3, columnspan=2)
@@ -119,9 +213,8 @@ def open_type_say_see(prev_win, category):
                             command=lambda: tk.see_answer())
     see_answer_btn.grid(row=5, column=5, columnspan=2)
 
-    # Hiding the buttons I don't want shown
-    tk.record_audio_btn.grid_remove()
-    tk.check_recording_btn.grid_remove()
+    # Clearing the user's entry on next button press
+    tk.next_arw_btn["command"] = lambda: tk.get_next_screen(entry)
 
 
 if __name__ == '__main__':
@@ -129,6 +222,14 @@ if __name__ == '__main__':
 
 
 # Sources (description below the links)
+# Main Sources
+# https://docs.python.org/3/library/tkinter.html - documentation for tkinter
+# https://stackoverflow.com - questions
+# https://www.geeksforgeeks.org - basic tutorials
+# https://www.hellocodeclub.com - google api
+
+
+# Everything
 # https://realpython.com/playing-and-recording-sound-python/#recording-audio
 #     Used for how to record and playback audio
 # https://www.daniweb.com/programming/software-development/threads/426702/problem-in-music-player
@@ -161,6 +262,8 @@ if __name__ == '__main__':
 # https://www.iconsdb.com/black-icons/wrench-2-icon.html
 # https://www.iconsdb.com/black-icons/rocket-icon.html
 # https://www.vexels.com/png-svg/preview/145829/rubble-illustration
+# https://icons8.com/icon/By2nLkSnm99A/foot-emoji
+# https://iconscout.com/icon/arm-edema-3589321
 #     Used for images
 # https://stackoverflow.com/questions/30786337/tkinter-windows-how-to-view-window-in-windows-task-bar-which-has-no-title-bar/30819099#30819099
 #     Used to get rid of titlebar
@@ -180,3 +283,7 @@ if __name__ == '__main__':
 #     How to do charts for user data
 # https://www.geeksforgeeks.org/get-current-date-using-python/
 #     Current date in python
+# Music by <a href="/users/beetpro-16097074/?tab=audio&amp;utm_source=link-attribution&amp;utm_medium=referral&amp;utm_campaign=audio&amp;utm_content=11282">beetpro</a> from <a href="https://pixabay.com/music/?utm_source=link-attribution&amp;utm_medium=referral&amp;utm_campaign=music&amp;utm_content=11282">Pixabay</a>
+#     Fail Sound
+# Music from <a href="https://pixabay.com/?utm_source=link-attribution&amp;utm_medium=referral&amp;utm_campaign=music&amp;utm_content=6297">Pixabay</a>
+#     Success Sound
