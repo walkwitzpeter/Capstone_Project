@@ -5,7 +5,6 @@ import pygame
 import word_image_dictionary
 import google_api
 import main
-import record_audio
 
 import tkinter.font as font
 
@@ -34,6 +33,7 @@ class TkInterWindow:
         self.next_arw_btn = None
         self.record_audio_btn = None
         self.check_recording_btn = None
+        self.see_answer_btn = None
 
         # Image
         self.back_arw_img = None
@@ -44,6 +44,13 @@ class TkInterWindow:
 
         # Answer/Img Stack
         self.photos_and_answers = None
+        self.cur_answer = None
+
+        # Keeping track of the words that I am spelling
+        self.letter_pos = 0
+        self.all_labels = []
+        # Keep track of if I am spelling so as not to go the next color early
+        self.spelling = False
 
         # Keeping track of percentage correct
         self.words_attempted = 0
@@ -100,10 +107,11 @@ class TkInterWindow:
         # Setting up the main image
         img = self.photos_and_answers.imgStack.pop()
         self.photos_and_answers.updateCurAnswer()
+        self.cur_answer = self.photos_and_answers.curAnswer
         self.main_img = Label(self.window)
         self.main_img.configure(image=img)
         self.main_img.image = img
-        self.main_img.grid(row=1, rowspan=2, column=3, columnspan=3)
+        self.main_img.grid(row=1, rowspan=2, column=4, columnspan=2)
 
         # Placing the feedback text box
         self.feedback_text = Label(self.window, text="Your answer appears here", compound=LEFT)
@@ -124,14 +132,12 @@ class TkInterWindow:
         Grid.rowconfigure(self.window, 0, weight=1)
         Grid.columnconfigure(self.window, 0, weight=1)
 
-        # Setting up the record button
-        self.record_audio_btn = Button(self.window, text="Record Answer",
-                                       command=lambda: record_audio.RecAUD())
-        self.record_audio_btn.grid(row=4, column=4)
-        # Checking the recording
-        self.check_recording_btn = Button(self.window, text="Check Recording",
-                                          command=lambda: self.check_recording())
-        self.check_recording_btn.grid(row=4, column=5)
+        # Creating an option to show the answer
+        self.see_answer_btn = Button(self.window, text="See Answer",
+                                     command=lambda: self.see_answer())
+        self.see_answer_btn.grid(row=self.ROWS, column=4, columnspan=2)
+        # Removing the grid position, so it doesn't show right away
+        self.see_answer_btn.grid_remove()
 
     def see_answer(self):
         self.feedback_text['text'] = self.photos_and_answers.curAnswer
@@ -152,13 +158,14 @@ class TkInterWindow:
             self.right = False
             self.update_counts()
         self.feedback_text.grid()
+        self.see_answer_btn.grid()
 
     def check_recording(self):
         text = str(google_api.GoogleAPI().get_transcript())
         self.feedback_text['text'] = "We heard the following possibilities:\n" + text
         self.feedback_text.grid()
-        print("cur_answer: " + self.photos_and_answers.curAnswer)
-        if text.casefold().__contains__(self.photos_and_answers.curAnswer.casefold()):
+        self.see_answer_btn.grid()
+        if text.casefold().__contains__(self.cur_answer.casefold()):
             play_sound(self.success_sound_path)
             self.feedback_text['image'] = self.check_img
             self.right = True
@@ -180,19 +187,31 @@ class TkInterWindow:
 
     def get_next_screen(self, entry=None):
         # To see if they attempted the question
-        if self.checked:
-            # Changing image if there is another image waiting and update answer
+        if self.checked and self.right:
+            # Checking if there are more images
             if self.photos_and_answers.imgStack:
-                if entry is not None:
-                    entry.delete(0, END)
+                # Updating Img/Answer
                 img = self.photos_and_answers.imgStack.pop()
                 self.main_img.configure(image=img)
                 self.main_img.image = img
                 self.photos_and_answers.updateCurAnswer()
+                self.cur_answer = self.photos_and_answers.curAnswer
+                # Getting rid of after answer components
                 self.feedback_text.grid_remove()
+                # Resetting tracking variables
                 self.checked = False
-            elif self.checked:
-                print("feedback screen")
+                self.letter_pos = 0
+
+                if self.spelling:
+                    for label in self.all_labels:
+                        label.grid_remove()
+                    main.setup_spelling(self)
+                elif not self.spelling:
+                    # Getting rid of text entry
+                    if entry is not None:
+                        entry.delete(0, END)
+                    self.see_answer_btn.grid_remove()
+            else:
                 self.open_basic_window(prev_win=self.window, title="Feedback Window")
                 my_font = font.Font(family='Helvetica', size=40)
                 score_text = "You got " + str(self.words_correct) + "/" + str(self.words_attempted) + \
@@ -200,7 +219,7 @@ class TkInterWindow:
                 score = Label(self.window, text="Congratulations you finished!\n" + score_text +
                                                 "\n Lets keep practicing!",
                               font=my_font)
-                score.grid(row=1, rowspan=self.ROWS-1, column=1, columnspan=self.COLUMNS-1)
+                score.grid(row=1, rowspan=self.ROWS - 1, column=1, columnspan=self.COLUMNS - 1)
 
     def go_back(self, game_mode):
         # Append percentage right to txt file
@@ -208,16 +227,24 @@ class TkInterWindow:
             self.percentage_right = self.words_correct/self.words_attempted
             if game_mode == "Associations":
                 with open("Output_Files/associations_user_percentages.csv", "a") as file_object:
-                    print("associations")
+                    print("Writing associations")
                     file_object.write(str(self.words_attempted) + "," + str(self.percentage_right * 100) + "," +
                                       str(date.today())
                                       + "\n")
-            else:
+            elif game_mode == "TSS":
                 with open("Output_Files/tss_user_percentages.csv", "a") as file_object:
-                    print("tss")
+                    print("Writing tss")
                     file_object.write(str(self.words_attempted) + "," + str(self.percentage_right * 100) + "," +
                                       str(date.today())
                                       + "\n")
+            elif game_mode == "Spelling":
+                with open("Output_Files/spelling_user_percentages.csv", "a") as file_object:
+                    print("Writing Spelling")
+                    file_object.write(str(self.words_attempted) + "," + str(self.percentage_right * 100) + "," +
+                                      str(date.today())
+                                      + "\n")
+        # Turn of spelling mode
+        self.spelling = False
         # Go Back to Homepage
         main.open_homepage_window(self.window)
 
@@ -226,6 +253,24 @@ class TkInterWindow:
             self.get_next_screen(entry)
         else:
             self.check_text_entry(entry)
+
+    def change_label(self, new_text, label, button):
+        # User picked right letter
+        if self.cur_answer[self.letter_pos].upper() == new_text:
+            # If letter was last in word, update that they finished
+            if self.letter_pos + 1 == len(self.cur_answer):
+                self.right = True
+                self.update_counts()
+            else:
+                self.letter_pos += 1
+            button.grid_remove()
+            label.configure(text=new_text)
+            # Adding label to array so that I can remove all when changing screens
+            self.all_labels.append(label)
+        # If user clicked on the wrong letter
+        else:
+            self.right = False
+            self.update_counts()
 
     def close_window(self):
         self.window.destroy()

@@ -1,4 +1,8 @@
+import random
 from tkinter import *
+from PIL import Image, ImageTk
+
+import record_audio
 import user_data_management as udm
 import tkinter_window
 import tkinter.font as font
@@ -7,7 +11,9 @@ import tkinter.font as font
 def open_homepage_window(prev_win=None):
     tk = tkinter_window.TkInterWindow()
     tk.open_basic_window("Speaking with Peter Rabbit", prev_win)
-    img = PhotoImage(file="Photos/Homepage Image.png")
+    img = (Image.open("Photos/Homepage Image.png"))
+    resized_img = img.resize((1300, 725), Image.ANTIALIAS)
+    img = ImageTk.PhotoImage(resized_img)
 
     label = Label(
         tk.window,
@@ -22,22 +28,21 @@ def open_homepage_window(prev_win=None):
     # Play button
     play_btn = Button(tk.window, text="Practice", font=my_font_big,
                       command=lambda: open_category_selection(tk.window))
-    play_btn.grid(row=5, rowspan=1, column=3, columnspan=2)
+    play_btn.grid(row=8, rowspan=1, column=3, columnspan=3, ipadx=150, ipady=20)
 
     # See user data Button
     see_user_stats_btn = Button(tk.window, text="See Stats", font=my_font_small,
                                 command=lambda: open_stats(tk.window))
-    see_user_stats_btn.grid(row=2, rowspan=1, column=1, columnspan=1)
+    see_user_stats_btn.grid(row=8, rowspan=1, column=1, columnspan=2, ipadx=125, ipady=20)
     # Instructions Button
     instructions_btn = Button(tk.window, text="Instructions", font=my_font_small,
                               command=lambda: open_instructions(tk.window))
-    instructions_btn.grid(row=2, rowspan=1, column=7, columnspan=1)
+    instructions_btn.grid(row=8, rowspan=1, column=7, columnspan=2, ipadx=125, ipady=20)
 
     tk.window.mainloop()
 
 
 def open_instructions(prev_win):
-    print("Instructions")
     tk = tkinter_window.TkInterWindow()
     tk.open_basic_window("Instructions", prev_win)
 
@@ -51,64 +56,109 @@ def open_instructions(prev_win):
         text="Basic Instructions",
         font=my_font_big
     )
-    basic_ins_title.grid(row=0, column=0, columnspan=4)
-    basic_instructions = Text(
+    basic_ins_title.grid(row=0, column=0, columnspan=8)
+    basic_instructions = Label(
         tk.window,
+        text="This program is designed to help users practice their speech while providing "
+             "feedback on growth over time. The stats button will show you your progress each "
+             "day. These graphs average out all exercises of each mode that you did that day. The"
+             " number next to each point displays how many questions you completed in total that "
+             "day.\n\nTo begin practicing first click 'Practice' on the homepage and then select "
+             "your category of words, then select the game mode you would like to play. The modes"
+             " are explained down below.",
         font=my_font_small,
-        width=30,
-        height=8,
+        wraplength=1000
     )
-    basic_instructions.insert(END, "This program is designed to help users practice their speech while providing "
-                                   "feedback on growth over time. The stats button will show you your progress each "
-                                   "day. These graphs average out all exercises of each mode that you did that day. The"
-                                   " number next to each point displays how many questions you completed in total that "
-                                   "day.\n\nTo begin practicing first click 'Practice' on the homepage and then select "
-                                   "your category of words, then select the game mode you would like to play. The modes"
-                                   " are explained to the right.")
-    basic_instructions.config(state=DISABLED)
-    basic_instructions.grid(row=1, column=1, columnspan=3)
-    # Scrollbar for this text
-    scrollbar = Scrollbar(tk.window, command=basic_instructions.yview)
-    basic_instructions.config(yscrollcommand=scrollbar.set)
-    scrollbar.grid(row=1, rowspan=1, column=0, sticky=NSEW)
+    basic_instructions.grid(row=1, column=0, columnspan=8)
+
+    # Canvas so you can scroll
+    canvas = Canvas(tk.window)
+    canvas_frame = Frame(canvas)
+
+    # Scrollbar
+    vscroll = Scrollbar(tk.window, orient="vertical", command=canvas.yview)
+    canvas['yscrollcommand'] = vscroll.set
+    canvas.grid(row=2, column=2, columnspan=7, sticky="nsew")
+    vscroll.grid(row=2, rowspan=6, column=8, sticky="nsew")
 
     # Game Instructions
-    # TODO
-    #   Maybe change this back because I don't love it right now, but show him what I was figuring out
-    basic_ins_title = Label(
-        tk.window,
+    game_ins_title = Label(
+        canvas_frame,
         text="Game Mode Instructions",
         font=my_font_big
     )
-    basic_ins_title.grid(row=0, column=4, columnspan=4)
+    game_ins_title.grid(row=0, column=0, columnspan=8)
+
+    # Drop Down Menu callback
+    def instruction_callback(*args):
+        if 'Typing' in clicked.get():
+            game_instructions.config(text=typing_mode_text)
+        elif 'Speaking' in clicked.get():
+            game_instructions.config(text=speaking_mode_text)
+        elif 'Spelling' in clicked.get():
+            game_instructions.config(text=spelling_mode_text)
+
+    # Setting up the drop-down menu
+    modes = [
+        'Select Mode',
+        'Typing Mode',
+        'Speaking Mode',
+        'Spelling Mode'
+    ]
+    clicked = StringVar(value=modes[0])
+    drop = OptionMenu(canvas_frame, clicked, *modes)
+    drop.grid(row=1, columnspan=tk.ROWS, column=0)
+
+    speaking_mode_text = "In Speaking Mode the user will be shown a picture after which they record the word that the "\
+                         "picture is showing. To record themselves the user clicks the record button and a microphone "\
+                         "appears, then click the microphone to begin recording and click again to end the recording."
+    typing_mode_text = "In Typing Mode you can both record your answer or type it, we recommend typing the answer " \
+                       "first to work on spelling then reading your answer afterwards. Once you hit enter it will " \
+                       "check your answer, or if you already answered correctly hitting enter again will take you to " \
+                       "the next screen, or you may click the check answer button to check the text entry, and use " \
+                       "the arrow to go to the next screen."
+    spelling_mode_text = "In Spelling Mode you will be presented with a picture of a word. Then you will be given the" \
+                         " corresponding number of blank spaces. Below the blank spaces will be the right letters but" \
+                         " in a random order. You will then select the correct letter that needs to go next. Getting " \
+                         "one letter wrong counts as getting the whole word wrong, when recording your statistics."
     game_instructions = Label(
-        tk.window,
-        text="In Basic Associations the user will be shown a picture after which they record the word that the picture "
-             "is showing. To record themselves the user clicks the record button and a microphone appears, then click "
-             "the microphone to begin recording and click again to end the recording. \n \n"
-             "In Type Say See you can both record your answer or type it, we recommend typing the answer first to work "
-             "on spelling then reading your answer afterwards. Once you hit enter it will check your answer, or if you "
-             "already answered correctly it hitting enter again will take you to the next screen, or you may click the "
-             "check answer button to check the text entry, and use the arrow to go to the next screen.",
+        canvas_frame,
+        text="Pleas select the game mode from the drop down menu above to see the corresponding explanation.",
         font=my_font_small,
-        wraplength=500
+        wraplength=800
     )
-    game_instructions.grid(row=1, column=4, columnspan=4)
+    game_instructions.grid(row=2, column=0, columnspan=8)
+
+    # Binding the drop-down menu
+    clicked.trace("w", instruction_callback)
+
+    # Create the canvas
+    canvas.create_window((0, 0), window=canvas_frame, anchor='n')
+    # Binding scrollbar to canvas-frame
+    canvas_frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
 
 
 def open_game_selection(prev_win, word_category):
     tk = tkinter_window.TkInterWindow()
     tk.open_basic_window("Game Selection", prev_win)
 
+    my_font = font.Font(family='Helvetica', size=20)
+
     # Making my different activity buttons
-    associations_btn = Button(tk.window, text="Basic Associations",
-                              command=lambda: open_basic_association(tk.window, word_category))
-    type_say_see_btn = Button(tk.window, text="Type, Say, See",
-                              command=lambda: open_type_say_see(tk.window, word_category))
+    associations_btn = Button(tk.window, text="Speaking Mode",
+                              command=lambda: open_basic_association(tk.window, word_category),
+                              font=my_font)
+    type_say_see_btn = Button(tk.window, text="Typing Mode",
+                              command=lambda: open_type_say_see(tk.window, word_category),
+                              font=my_font)
+    spelling_btn = Button(tk.window, text="Spelling Mode",
+                          command=lambda: open_spelling_mode(tk.window, word_category),
+                          font=my_font)
 
     # Putting them on the screen and configuring the Grid
-    associations_btn.grid(row=0, rowspan=2, column=0, columnspan=2)
-    type_say_see_btn.grid(row=1, rowspan=2, column=0, columnspan=2)
+    associations_btn.grid(row=1, rowspan=2, column=1, columnspan=2)
+    type_say_see_btn.grid(row=1, rowspan=2, column=5, columnspan=2)
+    spelling_btn.grid(row=3, rowspan=2, column=3, columnspan=1)
 
 
 def open_category_selection(prev_win):
@@ -146,12 +196,19 @@ def open_stats(prev_win):
         if 'Typing' in clicked.get():
             type_figure.grid()
             ass_figure.grid_remove()
+            spelling_figure.grid_remove()
         elif 'Speaking' in clicked.get():
             type_figure.grid_remove()
             ass_figure.grid()
+            spelling_figure.grid_remove()
+        elif 'Spelling' in clicked.get():
+            type_figure.grid_remove()
+            ass_figure.grid_remove()
+            spelling_figure.grid()
         else:
             type_figure.grid_remove()
             ass_figure.grid_remove()
+            spelling_figure.grid_remove()
 
     tk = tkinter_window.TkInterWindow()
     tk.open_basic_window("User Stats", prev_win)
@@ -160,27 +217,36 @@ def open_stats(prev_win):
     graphs = [
         'Select Graph',
         'Typing Mode',
-        'Speaking Mode'
+        'Speaking Mode',
+        'Spelling Mode'
     ]
     clicked = StringVar(value=graphs[0])
     drop = OptionMenu(tk.window, clicked, *graphs)
     drop.grid(row=0, columnspan=tk.ROWS, column=0)
 
-    # Setting up the graph for associations mode
+    # Setting up the graph for associations option
     udm.find_stats("Output_Files/associations_user_percentages.csv")
-    associations_graph = udm.get_plot(tk.window, "Associations")
+    associations_graph = udm.get_plot(tk.window, "Speaking Mode")
     ass_figure = associations_graph.get_tk_widget()
     # Placing so it retains proper position, then removing
     ass_figure.grid(row=2, column=0, columnspan=tk.COLUMNS)
     ass_figure.grid_remove()
 
-    # Setting up the graph for TSS mode
+    # Setting up the graph for TSS option
     udm.find_stats("Output_Files/tss_user_percentages.csv")
     typing_graph = udm.get_plot(tk.window, "Typing Mode")
     type_figure = typing_graph.get_tk_widget()
     # Placing so it retains proper position, then removing
     type_figure.grid(row=2, column=0, columnspan=tk.COLUMNS)
     type_figure.grid_remove()
+
+    # Setting up graph for Spelling option
+    udm.find_stats("Output_Files/spelling_user_percentages.csv")
+    spelling_graph = udm.get_plot(tk.window, "Spelling Mode")
+    spelling_figure = spelling_graph.get_tk_widget()
+    # Placing so it retains proper position, then removing
+    spelling_figure.grid(row=2, column=0, columnspan=tk.COLUMNS)
+    spelling_figure.grid_remove()
 
     # Calling my callback function
     clicked.trace("w", graph_callback)
@@ -190,6 +256,15 @@ def open_basic_association(prev_win, category):
     # Running my Basic Game Window
     tk = tkinter_window.TkInterWindow()
     tk.open_game_window(prev_win, "Basic Associations", category, "Associations")
+
+    # Setting up the record button
+    tk.record_audio_btn = Button(tk.window, text="Record Answer",
+                                 command=lambda: record_audio.RecAUD())
+    tk.record_audio_btn.grid(row=4, column=4)
+    # Checking the recording
+    tk.check_recording_btn = Button(tk.window, text="Check Recording",
+                                    command=lambda: tk.check_recording())
+    tk.check_recording_btn.grid(row=4, column=5)
 
 
 def open_type_say_see(prev_win, category):
@@ -206,15 +281,42 @@ def open_type_say_see(prev_win, category):
 
     check_entry_btn = Button(tk.window, text="Check Answer",
                              command=lambda: tk.check_text_entry(entry))
-    check_entry_btn.grid(row=5, column=3, columnspan=2)
-
-    # Seeing the correct answer
-    see_answer_btn = Button(tk.window, text="See Answer",
-                            command=lambda: tk.see_answer())
-    see_answer_btn.grid(row=5, column=5, columnspan=2)
+    check_entry_btn.grid(row=4, column=4, columnspan=2)
 
     # Clearing the user's entry on next button press
     tk.next_arw_btn["command"] = lambda: tk.get_next_screen(entry)
+
+
+def open_spelling_mode(prev_win, category):
+    tk = tkinter_window.TkInterWindow()
+    tk.open_game_window(prev_win, "Spelling Practice", category, "Spelling")
+
+    tk.spelling = True
+
+    setup_spelling(tk)
+
+
+def setup_spelling(tk):
+    my_font = font.Font(family='Helvetica', size=30, underline=True)
+    word_string = tk.cur_answer.upper()
+    start_pos = int(tk.COLUMNS/2 - len(word_string)/2 + 1)
+    # Randomizing letters
+    cur_positions = []
+    rand = random.Random()
+    for letter_pos in range(len(word_string)):
+        cur_letter = str(word_string[letter_pos])
+        ltr_label = Label(tk.window, text=" ", font=my_font)
+        ltr_label.grid(row=3, column=start_pos + letter_pos)
+
+        ltr_btn = Button(tk.window, text=cur_letter, font=my_font)
+        ltr_btn.configure(command=lambda label=ltr_label, letter=cur_letter, btn=ltr_btn:
+                          tk.change_label(letter, label, btn))
+        # Randomizing the placement of the letters
+        placement = rand.randint(start_pos, start_pos + len(word_string) - 1)
+        while placement in cur_positions:
+            placement = rand.randint(start_pos, start_pos + len(word_string) - 1)
+        ltr_btn.grid(row=4, column=placement)
+        cur_positions.append(placement)
 
 
 if __name__ == '__main__':

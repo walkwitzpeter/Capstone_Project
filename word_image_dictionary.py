@@ -1,33 +1,11 @@
+import random
 from tkinter import PhotoImage
 
-# AllWords = ['Apple', 'Orange', 'Carrot', 'Red', 'Rice', 'Radio', 'Raisin', 'Green', 'Blue', 'Pink', 'Black',
-#             'Rocket', 'Wrench', 'Rock', 'Computer']
 FoodWords = ['Apple', 'Orange', 'Carrot', 'Rice', 'Raisin']
 ColorWords = ['Red', 'Green', 'Blue', 'Pink', 'Black']
 ObjectWords = ['Radio', 'Rocket', 'Wrench', 'Rock', 'Computer']
 BodyWords = ['Hand', 'Foot']
 AllWords = FoodWords + ColorWords + ObjectWords + BodyWords
-
-# WordImageDictionary = {
-#     'Done': 'Done.png',
-#     'Apple': 'Apple.png',
-#     'Orange': 'Orange.png',
-#     'Carrot': 'Carrot.png',
-#     'Red': 'Red.png',
-#     'Rice': 'Rice.png',
-#     'Radio': 'Radio.png',
-#     'Raisin': 'Raisin.png',
-#     'Green': 'Green.png',
-#     'Blue': 'Blue.png',
-#     'Pink': 'Pink.png',
-#     'Black': 'Black.png',
-#     'Rocket': 'Rocket.png',
-#     'Wrench': 'Wrench.png',
-#     'Rock': 'Rock.png',
-#     'Computer': 'Computer.png'
-# }
-
-# category = "All"
 
 
 class Words:
@@ -35,6 +13,10 @@ class Words:
         self.__wordStack = []
         self.imgStack = []
         self.curAnswer = ""
+
+        # Used to randomize the list
+        self.rand = random.Random()
+        self.position_array = []
 
     def initializeStacks(self, category):
         if category == "Food":
@@ -51,7 +33,15 @@ class Words:
             print("Failed to find category")
             chosen_array = AllWords
 
+        # Adding words and Images to stack
         for word in chosen_array:
+            # Randomizing the word order
+            rand_word_pos = self.rand.randint(0, len(chosen_array) - 1)
+            while rand_word_pos in self.position_array:
+                rand_word_pos = self.rand.randint(0, len(chosen_array) - 1)
+            self.position_array.append(rand_word_pos)
+            # Making the word random instead of in order with the below assignment
+            word = chosen_array[rand_word_pos]
             self.__wordStack.append(word)
             img = PhotoImage(file="Photos/" + word + ".png").subsample(2, 2)
             self.imgStack.append(img)
